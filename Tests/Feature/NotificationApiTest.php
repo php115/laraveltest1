@@ -40,7 +40,7 @@ class NotificationApiTest extends TestCase
     {
         $payload = [
             'user_id' => 42,
-            'text' => str_repeat('a', 501), // Больше 500
+            'text' => str_repeat('a', 501),
             'channel' => 'email',
         ];
 
