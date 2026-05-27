@@ -1,0 +1,58 @@
+services:
+  app:
+    image: shadoww/php-fpm-8.3:latest 
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/var/www
+    environment:
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=notification_service
+      - DB_USERNAME=sail
+      - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - QUEUE_CONNECTION=redis
+    depends_on:
+      - db
+      - redis
+
+  apache:
+    image: httpd:2.4-alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www
+      - .docker/httpd.conf:/usr/local/apache2/conf/httpd.conf
+    depends_on:
+      - app
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: notification_service
+      POSTGRES_USER: sail
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  queue-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: php /var/www/artisan queue:work --tries=5 --backoff=2
+    volumes:
+      - .:/var/www
+    depends_on:
+      - app
+      - redisvolumes:
+  pgdata:
